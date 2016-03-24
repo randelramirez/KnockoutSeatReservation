@@ -1,0 +1,142 @@
+﻿@model IEnumerable<KnockoutSeatReservation.Models.SeatReservation>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+@*<h2>Index</h2>*@
+
+@*<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Meal.Name)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Name)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Meal.Name)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Name)
+        </td>
+        <td>
+            @Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
+            @Html.ActionLink("Details", "Details", new { id=item.Id }) |
+            @Html.ActionLink("Delete", "Delete", new { id=item.Id })
+        </td>
+    </tr>
+}
+
+</table>*@
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h2>Your seat reservations (<span data-bind="text: seats().length"></span>)</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Passenger name</th>
+            <th>Meal</th>
+            <th>Surcharge</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody data-bind="foreach: seats">
+        <tr>
+            <td><input data-bind="value: name" /></td>
+            <td><select data-bind="options: $root.availableMeals, value: meal, optionsText: 'Name'"></select></td>
+            <td data-bind="text: formattedPrice"></td>
+            <td><a href="#" data-bind="click: $root.removeSeat">Remove</a></td>
+        </tr>
+    </tbody>
+</table>
+
+<button data-bind="click: addSeat, enable: seats().length < 5">Reserve another seat</button>
+
+<h3 data-bind="visible: totalSurcharge() > 0">
+    Total surcharge: $<span data-bind="text: totalSurcharge().toFixed(2)"></span>
+</h3>
+
+
+
+
+@section scripts{
+<script src="~/Scripts/knockout-3.4.0.js"></script>
+<script>
+    $(function () {
+
+        $.getJSON("@Url.Action("GetAllMeals","Meals")").done(function (data) {
+
+            var model = new ReservationsViewModel(data);
+            ko.applyBindings(model);
+
+        });
+    })
+
+    // Class to represent a row in the seat reservations grid
+    function SeatReservation(name, initialMeal) {
+
+        this.name = name;
+        this.meal = ko.observable(initialMeal);
+
+        this.formattedPrice = ko.computed(function () {
+            var price = this.meal().Price;
+            return price ? "$" + price.toFixed(2) : "None";
+        }, this);
+    }
+
+    // Overall viewmodel for this screen, along with initial state
+    function ReservationsViewModel(meals) {
+
+        //var self = this;
+        this.availableMeals = meals;
+
+
+        // Editable data
+        this.seats = ko.observableArray([
+            new SeatReservation("Steve", this.availableMeals[0]),
+            new SeatReservation("Bert", this.availableMeals[2])
+        ]);
+
+        // Computed data
+        this.totalSurcharge = ko.computed(function () {
+            var total = 0;
+            for (var i = 0; i < this.seats().length; i++) {
+                total += this.seats()[i].meal().Price;
+            }
+            return total;
+        }, this);
+
+        // Operations
+        this.addSeat = function () {
+            this.seats.push(new SeatReservation("", this.availableMeals[0]));
+        }
+
+        //var self = this;
+        //self.seats.remove(...)
+        //bind is needed because context of this is different when called from $root or any other binding context like $parent
+        this.removeSeat = function (seat) { this.seats.remove(seat) }.bind(this);
+    }
+
+</script>
+}
